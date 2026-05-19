@@ -1,0 +1,43 @@
+from airflow import DAG
+from airflow.operators.bash import BashOperator
+from datetime import datetime
+
+with DAG(
+
+'warehouse_pipeline',
+
+start_date=datetime(
+2025,1,1
+),
+
+schedule='@daily',
+
+catchup=False
+
+) as dag:
+
+    upload=BashOperator(
+
+    task_id='upload_s3',
+
+    bash_command='python ingestion/upload_to_s3.py'
+
+    )
+
+    load=BashOperator(
+
+    task_id='load_snowflake',
+
+    bash_command='python warehouse/load_snowflake.py'
+
+    )
+
+    transform=BashOperator(
+
+    task_id='run_dbt',
+
+    bash_command='dbt run'
+
+    )
+
+upload>>load>>transform
